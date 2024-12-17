@@ -109,7 +109,7 @@ class CreateAccountScreen(Screen):
     def go_back(self, instance):
         self.manager.current = "login"
 
-# Home Screen
+# Updated Home Screen
 class HomeScreen(Screen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -117,7 +117,7 @@ class HomeScreen(Screen):
         layout.add_widget(Label(text="Welcome!", font_size=24))
         
         create_pool_button = Button(text="Create Pool", size_hint=(1, 0.2))
-        create_pool_button.bind(on_press=self.go_to_create_pool)
+        create_pool_button.bind(on_press=self.go_to_pool_name)
         layout.add_widget(create_pool_button)
         
         user_profile_button = Button(text="Go to User Profile", size_hint=(1, 0.2))
@@ -126,8 +126,9 @@ class HomeScreen(Screen):
         
         self.add_widget(layout)
     
-    def go_to_create_pool(self, instance):
-        self.manager.current = "odds"
+    def go_to_pool_name(self, instance):
+        self.manager.add_widget(PoolNameScreen(name="pool_name"))
+        self.manager.current = "pool_name"
     
     def go_to_user_profile(self, instance):
         self.manager.current = "profile"
@@ -320,6 +321,7 @@ class PoolNamingScreen(Screen):
 
     def go_back(self, instance):
         self.manager.current = "odds"
+
 class OddsCalculatorScreen(Screen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -357,18 +359,58 @@ class OddsCalculatorScreen(Screen):
     def go_back_home(self, instance):
         self.manager.current = "home"
 
+class PoolNameScreen(Screen):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        layout = BoxLayout(orientation="vertical", spacing=10, padding=20)
+        layout.add_widget(Label(text="Name Your Pool", font_size=24))
 
-# Update Screen Manager
+        # Input field for pool name
+        self.pool_name_input = TextInput(hint_text="Enter Pool Name", multiline=False)
+        layout.add_widget(self.pool_name_input)
+
+        # Next button to proceed to the pool size screen
+        next_button = Button(text="Next", size_hint=(1, 0.2))
+        next_button.bind(on_press=self.go_to_pool_size)
+        layout.add_widget(next_button)
+
+        # Back button to return to Home Screen
+        back_button = Button(text="Back to Home", size_hint=(1, 0.2))
+        back_button.bind(on_press=self.go_back_home)
+        layout.add_widget(back_button)
+
+        self.output_label = Label(text="", font_size=16)
+        layout.add_widget(self.output_label)
+
+        self.add_widget(layout)
+
+    def go_to_pool_size(self, instance):
+        pool_name = self.pool_name_input.text.strip()
+        if pool_name:
+            # Save pool name to the user's pool list
+            user_pools[current_user["username"]].append(pool_name)
+            self.manager.add_widget(OddsCalculatorScreen(name="odds"))
+            self.manager.current = "odds"
+        else:
+            self.output_label.text = "Error: Pool name cannot be empty."
+
+    def go_back_home(self, instance):
+        self.manager.current = "home"
+
+
+# Updated Screen Manager
 class BettingApp(App):
     def build(self):
         sm = ScreenManager()
         sm.add_widget(LoginScreen(name="login"))
         sm.add_widget(CreateAccountScreen(name="create"))
         sm.add_widget(HomeScreen(name="home"))
-        sm.add_widget(OddsCalculatorScreen(name="odds"))
         sm.add_widget(UserProfileScreen(name="profile"))
         return sm
 
+
+if __name__ == "__main__":
+    BettingApp().run()
 
 if __name__ == "__main__":
     BettingApp().run()
